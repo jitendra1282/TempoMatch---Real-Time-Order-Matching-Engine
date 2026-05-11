@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+/* ============================================
+   TempoMatch — Binance-Inspired Dark Theme
+   ============================================ */
+
+@theme {
+  --color-bg-primary: #0b0e11;
+  --color-bg-secondary: #1e2329;
+  --color-bg-tertiary: #2b3139;
+  --color-bg-hover: #363c45;
+  --color-border: #2b3139;
+  --color-text-primary: #eaecef;
+  --color-text-secondary: #848e9c;
+  --color-text-muted: #5e6673;
+  --color-bid: #0ecb81;
+  --color-bid-bg: rgba(14, 203, 129, 0.1);
+  --color-ask: #f6465d;
+  --color-ask-bg: rgba(246, 70, 93, 0.1);
+  --color-accent: #f0b90b;
+  --color-accent-hover: #d4a30a;
+}
+
+/* Base Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-bg-tertiary);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-bg-hover);
+}
+
+/* Input styling */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  fiatBalance  Decimal  @default(10000.00)
+  assetBalance Decimal  @default(0.00)
+  orders       Order[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Order {
+  id           String   @id @default(uuid())
+  userId       String
+  side         String   // "BUY" | "SELL"
+  type         String   // "LIMIT" | "MARKET"
+  price        Decimal
+  initialQty   Decimal
+  remainingQty Decimal
+  status       String   // "OPEN" | "PARTIAL" | "FILLED" | "CANCELED"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model Trade {
+  id           String   @id @default(uuid())
+  makerOrderId String
+  takerOrderId String
+  price        Decimal
+  qty          Decimal
+  executedAt   DateTime @default(now())
+}

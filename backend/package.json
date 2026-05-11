@@ -1,0 +1,13 @@
+{
+  "name": "tempomatch-backend",
+  "version": "1.0.0",
+  "description": "TempoMatch order matching engine backend",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
