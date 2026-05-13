@@ -47,7 +47,7 @@ export default function useTrades() {
 
       // Update live candlestick data
       const tradeTimeSec = Math.floor(now.getTime() / 1000)
-      const interval = 3600 // 1 hour candles
+      const interval = useStore.getState().chartInterval
       const currentPeriod = Math.floor(tradeTimeSec / interval) * interval
       
       const newCandles = [...candleData.candles]

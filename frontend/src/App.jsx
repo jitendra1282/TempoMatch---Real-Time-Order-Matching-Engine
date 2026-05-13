@@ -35,9 +35,6 @@ export default function App() {
     listUsers()
       .then((res) => {
         setUsers(res.data.users)
-        if (res.data.users.length > 0 && !currentUser) {
-          setCurrentUser(res.data.users[0])
-        }
       })
       .catch(() => {
         // Backend offline — use a default local user

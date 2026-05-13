@@ -5,18 +5,18 @@
    ============================================ */
 
 @theme {
-  --color-bg-primary: #0b0e11;
-  --color-bg-secondary: #1e2329;
-  --color-bg-tertiary: #2b3139;
-  --color-bg-hover: #363c45;
-  --color-border: #2b3139;
-  --color-text-primary: #eaecef;
-  --color-text-secondary: #848e9c;
-  --color-text-muted: #5e6673;
-  --color-bid: #0ecb81;
-  --color-bid-bg: rgba(14, 203, 129, 0.1);
-  --color-ask: #f6465d;
-  --color-ask-bg: rgba(246, 70, 93, 0.1);
+  --color-bg-primary: #080a0e;
+  --color-bg-secondary: rgba(24, 28, 35, 0.75);
+  --color-bg-tertiary: #20262f;
+  --color-bg-hover: rgba(255, 255, 255, 0.05);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-text-primary: #f0f2f5;
+  --color-text-secondary: #9ea4ae;
+  --color-text-muted: #646a73;
+  --color-bid: #13d284;
+  --color-bid-bg: rgba(19, 210, 132, 0.15);
+  --color-ask: #ff4d64;
+  --color-ask-bg: rgba(255, 77, 100, 0.15);
   --color-accent: #f0b90b;
   --color-accent-hover: #d4a30a;
 }

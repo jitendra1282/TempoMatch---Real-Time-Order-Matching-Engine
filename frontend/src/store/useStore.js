@@ -2,13 +2,12 @@ import { create } from 'zustand'
 
 // ── Mock data generators (used as initial/fallback state) ─────────────────────
 
-function generateMockCandles() {
+function generateMockCandles(interval = 86400, count = 2000) {
   const candles = []
   let basePrice = 81000
   const now = Math.floor(Date.now() / 1000)
-  const interval = 3600
 
-  for (let i = 100; i >= 0; i--) {
+  for (let i = count; i >= 0; i--) {
     const time = now - i * interval
     const open = basePrice + (Math.random() - 0.48) * 500
     const close = open + (Math.random() - 0.48) * 600
@@ -85,9 +84,27 @@ const useStore = create((set, get) => ({
   orderBook: generateMockOrderBook(),
   setOrderBook: (book) => set({ orderBook: book }),
 
-  // Candle data
-  candleData: { candles: generateMockCandles() },
+  // Candle data and timeframe
+  timeframe: '1D',
+  chartInterval: 86400,
+  candleData: { candles: generateMockCandles(86400, 2000) },
   setCandleData: (data) => set({ candleData: data }),
+  setTimeframe: (tf) => {
+    let interval = 86400
+    if (tf === '1m') interval = 60
+    else if (tf === '5m') interval = 300
+    else if (tf === '15m') interval = 900
+    else if (tf === '1H') interval = 3600
+    else if (tf === '4H') interval = 14400
+    else if (tf === '1D') interval = 86400
+    else if (tf === '1W') interval = 604800
+    
+    set({
+      timeframe: tf,
+      chartInterval: interval,
+      candleData: { candles: generateMockCandles(interval, 2000) }
+    })
+  },
 
   // Recent trades (replaced by live WS data when connected)
   recentTrades: generateMockTrades(),

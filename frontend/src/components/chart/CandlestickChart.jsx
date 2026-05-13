@@ -5,7 +5,7 @@ import useStore from '../../store/useStore'
 export default function CandlestickChart() {
   const chartContainerRef = useRef(null)
   const chartRef = useRef(null)
-  const { candleData } = useStore()
+  const { candleData, timeframe, setTimeframe } = useStore()
 
   useEffect(() => {
     if (!chartContainerRef.current) return
@@ -83,6 +83,13 @@ export default function CandlestickChart() {
   useEffect(() => {
     if (chartRef.current && candleData.candles.length > 0) {
       chartRef.current.candleSeries.setData(candleData.candles)
+      const volumeData = candleData.candles.map(c => ({
+        time: c.time,
+        value: c.volume || Math.random() * 100,
+        color: c.close >= c.open ? 'rgba(14,203,129,0.3)' : 'rgba(246,70,93,0.3)',
+      }))
+      chartRef.current.volumeSeries.setData(volumeData)
+      chartRef.current.chart.timeScale().fitContent()
     }
   }, [candleData])
 
@@ -95,7 +102,12 @@ export default function CandlestickChart() {
           {['1m', '5m', '15m', '1H', '4H', '1D', '1W'].map(tf => (
             <button
               key={tf}
-              className="px-2 py-0.5 text-[11px] rounded text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors cursor-pointer"
+              onClick={() => setTimeframe(tf)}
+              className={`px-2 py-0.5 text-[11px] rounded transition-colors cursor-pointer ${
+                timeframe === tf
+                  ? 'bg-bg-tertiary text-text-primary font-medium'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'
+              }`}
             >
               {tf}
             </button>

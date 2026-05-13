@@ -183,3 +183,36 @@ export async function getUserOrders(userId) {
     orderBy: { createdAt: 'desc' },
   })
 }
+
+/**
+ * Get complete order history for a user (all statuses).
+ */
+export async function getUserOrderHistory(userId) {
+  return prisma.order.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+/**
+ * Get complete trade history for a user (maker or taker).
+ */
+export async function getUserTradeHistory(userId) {
+  const userOrders = await prisma.order.findMany({
+    where: { userId },
+    select: { id: true },
+  })
+  const orderIds = userOrders.map((o) => o.id)
+
+  if (orderIds.length === 0) return []
+
+  return prisma.trade.findMany({
+    where: {
+      OR: [
+        { makerOrderId: { in: orderIds } },
+        { takerOrderId: { in: orderIds } },
+      ],
+    },
+    orderBy: { executedAt: 'desc' },
+  })
+}

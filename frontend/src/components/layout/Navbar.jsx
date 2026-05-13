@@ -4,7 +4,7 @@ export default function Navbar() {
   const { currentUser, setCurrentUser, socketConnected } = useStore()
 
   return (
-    <nav className="flex items-center justify-between px-4 h-12 bg-bg-secondary border-b border-border shrink-0">
+    <nav className="flex items-center justify-between px-4 h-14 bg-bg-secondary/80 backdrop-blur-md border-b border-border shrink-0 sticky top-0 z-50 shadow-sm">
       {/* Logo */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">

@@ -1,6 +1,6 @@
 // Order controller — validate → engine.match() → DB persist → broadcast
 
-import { placeOrder, cancelOrder, getUserOrders } from '../services/orderService.js'
+import { placeOrder, cancelOrder, getUserOrders, getUserOrderHistory, getUserTradeHistory } from '../services/orderService.js'
 import { broadcastOrderBook, broadcastTrade } from '../services/broadcastService.js'
 
 /**
@@ -53,6 +53,38 @@ export async function listOrders(req, res, next) {
 
     const orders = await getUserOrders(userId)
     res.json({ orders })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * GET /api/v1/orders/history?userId=<uuid>
+ * Returns complete order history for the user.
+ */
+export async function getHistory(req, res, next) {
+  try {
+    const { userId } = req.query
+    if (!userId) return res.status(400).json({ error: 'userId query param required' })
+
+    const orders = await getUserOrderHistory(userId)
+    res.json({ orders })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * GET /api/v1/orders/trades?userId=<uuid>
+ * Returns complete trade history for the user.
+ */
+export async function getTrades(req, res, next) {
+  try {
+    const { userId } = req.query
+    if (!userId) return res.status(400).json({ error: 'userId query param required' })
+
+    const trades = await getUserTradeHistory(userId)
+    res.json({ trades })
   } catch (err) {
     next(err)
   }

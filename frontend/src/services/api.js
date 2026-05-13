@@ -11,6 +11,8 @@ const api = axios.create({
 export const placeOrder = (data) => api.post('/orders', data)
 export const cancelOrder = (id, userId) => api.delete(`/orders/${id}?userId=${userId}`)
 export const getOpenOrders = (userId) => api.get(`/orders?userId=${userId}`)
+export const getOrderHistory = (userId) => api.get(`/orders/history?userId=${userId}`)
+export const getTradeHistory = (userId) => api.get(`/orders/trades?userId=${userId}`)
 
 // ── User APIs ─────────────────────────────────────────────────────────────────
 export const getBalance = (userId) => api.get(`/users/${userId}/balance`)

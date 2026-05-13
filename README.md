@@ -21,18 +21,45 @@ TempoMatch/
 
 ## Getting Started
 
-### Frontend
+### Prerequisites
+- Node.js (v18+ recommended)
+- PostgreSQL (Ensure it is running)
+
+### Backend Setup
+1. Navigate to the backend directory:
 ```bash
-cd frontend
+cd backend
+```
+2. Install dependencies:
+```bash
 npm install
+```
+3. Configure environment variables. Create a `.env` file in the `backend` directory (you can copy from `.env.example`):
+```bash
+cp .env.example .env
+```
+*Note: Update the `DATABASE_URL` in the `.env` file with your actual PostgreSQL credentials.*
+
+4. Run database migrations:
+```bash
+npx prisma migrate dev
+```
+5. Start the backend server:
+```bash
 npm run dev
 ```
 
-### Backend
+### Frontend Setup
+1. Open a new terminal and navigate to the frontend directory:
 ```bash
-cd backend
+cd frontend
+```
+2. Install dependencies:
+```bash
 npm install
-npx prisma migrate dev
+```
+3. Start the frontend development server:
+```bash
 npm run dev
 ```
 
