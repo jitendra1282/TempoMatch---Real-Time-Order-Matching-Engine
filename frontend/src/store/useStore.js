@@ -6,9 +6,10 @@ function generateMockCandles(interval = 86400, count = 2000) {
   const candles = []
   let basePrice = 81000
   const now = Math.floor(Date.now() / 1000)
+  const alignedNow = Math.floor(now / interval) * interval
 
   for (let i = count; i >= 0; i--) {
-    const time = now - i * interval
+    const time = alignedNow - i * interval
     const open = basePrice + (Math.random() - 0.48) * 500
     const close = open + (Math.random() - 0.48) * 600
     const high = Math.max(open, close) + Math.random() * 300

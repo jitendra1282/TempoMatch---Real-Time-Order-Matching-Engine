@@ -55,9 +55,24 @@ export default function CandlestickChart() {
       scaleMargins: { top: 0.85, bottom: 0 },
     })
 
-    candleSeries.setData(candleData.candles)
+    // lightweight-charts requires strictly ascending time without duplicates
+    const prepareData = (candles) => {
+      const sorted = [...candles].sort((a, b) => a.time - b.time)
+      const unique = []
+      for (const c of sorted) {
+        if (unique.length === 0 || unique[unique.length - 1].time !== c.time) {
+          unique.push(c)
+        } else {
+          unique[unique.length - 1] = { ...unique[unique.length - 1], ...c } // overwrite duplicate
+        }
+      }
+      return unique
+    }
 
-    const volumeData = candleData.candles.map(c => ({
+    const safeData = prepareData(candleData.candles)
+    candleSeries.setData(safeData)
+
+    const volumeData = safeData.map(c => ({
       time: c.time,
       value: c.volume || Math.random() * 100,
       color: c.close >= c.open ? 'rgba(14,203,129,0.3)' : 'rgba(246,70,93,0.3)',
@@ -83,10 +98,19 @@ export default function CandlestickChart() {
   useEffect(() => {
     if (chartRef.current && candleData.candles.length > 0) {
       try {
-        // lightweight-charts requires data sorted by time with no duplicates
+        // Use the same preparation logic
         const sorted = [...candleData.candles].sort((a, b) => a.time - b.time)
-        chartRef.current.candleSeries.setData(sorted)
-        const volumeData = sorted.map(c => ({
+        const unique = []
+        for (const c of sorted) {
+          if (unique.length === 0 || unique[unique.length - 1].time !== c.time) {
+            unique.push(c)
+          } else {
+            unique[unique.length - 1] = { ...unique[unique.length - 1], ...c }
+          }
+        }
+        
+        chartRef.current.candleSeries.setData(unique)
+        const volumeData = unique.map(c => ({
           time: c.time,
           value: c.volume || Math.random() * 100,
           color: c.close >= c.open ? 'rgba(14,203,129,0.3)' : 'rgba(246,70,93,0.3)',
