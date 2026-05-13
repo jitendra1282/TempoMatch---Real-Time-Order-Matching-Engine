@@ -7,6 +7,7 @@ import useTrades from './hooks/useTrades'
 import useSocket from './hooks/useSocket'
 import useStore from './store/useStore'
 import { listUsers, createUser } from './services/api'
+import ErrorBoundary from './components/ErrorBoundary'
 
 // Mounts WebSocket subscriber hooks at root level
 function LiveDataProvider() {
@@ -121,13 +122,15 @@ export default function App() {
   }
 
   return (
-    <>
+    <ErrorBoundary>
       <LiveDataProvider />
       <div className="flex flex-col h-screen bg-bg-primary">
         <Navbar />
         <MarketStats />
-        <TradingLayout />
+        <ErrorBoundary>
+          <TradingLayout />
+        </ErrorBoundary>
       </div>
-    </>
+    </ErrorBoundary>
   )
 }

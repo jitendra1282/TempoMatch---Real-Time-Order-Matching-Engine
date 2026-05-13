@@ -50,23 +50,32 @@ export default function useTrades() {
       const interval = useStore.getState().chartInterval
       const currentPeriod = Math.floor(tradeTimeSec / interval) * interval
       
-      const newCandles = [...candleData.candles]
-      const lastCandle = newCandles[newCandles.length - 1]
-      
+      const prevCandles = candleData.candles
+      const lastCandle = prevCandles[prevCandles.length - 1]
+      let newCandles
+
       if (lastCandle && lastCandle.time === currentPeriod) {
-        lastCandle.close = lastPrice
-        lastCandle.high = Math.max(lastCandle.high, lastPrice)
-        lastCandle.low = Math.min(lastCandle.low, lastPrice)
-        lastCandle.volume = (lastCandle.volume || 0) + tradeQty
-      } else {
-        newCandles.push({
-          time: currentPeriod,
-          open: lastCandle ? lastCandle.close : lastPrice,
-          high: lastPrice,
-          low: lastPrice,
+        // Immutably update the last candle — do NOT mutate in place
+        const updatedLast = {
+          ...lastCandle,
           close: lastPrice,
-          volume: tradeQty,
-        })
+          high: Math.max(lastCandle.high, lastPrice),
+          low: Math.min(lastCandle.low, lastPrice),
+          volume: (lastCandle.volume || 0) + tradeQty,
+        }
+        newCandles = [...prevCandles.slice(0, -1), updatedLast]
+      } else {
+        newCandles = [
+          ...prevCandles,
+          {
+            time: currentPeriod,
+            open: lastCandle ? lastCandle.close : lastPrice,
+            high: lastPrice,
+            low: lastPrice,
+            close: lastPrice,
+            volume: tradeQty,
+          },
+        ]
       }
       setCandleData({ candles: newCandles })
     }

@@ -82,14 +82,20 @@ export default function CandlestickChart() {
   // Update candle data reactively
   useEffect(() => {
     if (chartRef.current && candleData.candles.length > 0) {
-      chartRef.current.candleSeries.setData(candleData.candles)
-      const volumeData = candleData.candles.map(c => ({
-        time: c.time,
-        value: c.volume || Math.random() * 100,
-        color: c.close >= c.open ? 'rgba(14,203,129,0.3)' : 'rgba(246,70,93,0.3)',
-      }))
-      chartRef.current.volumeSeries.setData(volumeData)
-      chartRef.current.chart.timeScale().fitContent()
+      try {
+        // lightweight-charts requires data sorted by time with no duplicates
+        const sorted = [...candleData.candles].sort((a, b) => a.time - b.time)
+        chartRef.current.candleSeries.setData(sorted)
+        const volumeData = sorted.map(c => ({
+          time: c.time,
+          value: c.volume || Math.random() * 100,
+          color: c.close >= c.open ? 'rgba(14,203,129,0.3)' : 'rgba(246,70,93,0.3)',
+        }))
+        chartRef.current.volumeSeries.setData(volumeData)
+        chartRef.current.chart.timeScale().fitContent()
+      } catch (err) {
+        console.warn('[Chart] Failed to update candle data:', err.message)
+      }
     }
   }, [candleData])
 
