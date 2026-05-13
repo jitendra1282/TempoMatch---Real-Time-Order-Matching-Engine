@@ -46,6 +46,7 @@ export async function createUser(req, res, next) {
 export async function listUsers(req, res, next) {
   try {
     const users = await prisma.user.findMany({
+      where: { username: { not: 'TempoBot' } },
       select: { id: true, username: true, fiatBalance: true, assetBalance: true },
       orderBy: { createdAt: 'asc' },
     })
