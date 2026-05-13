@@ -19,7 +19,8 @@ export { prisma }
 export async function placeOrder(data) {
   const { userId, side, type, price: rawPrice, qty: rawQty } = data
 
-  const price = parseFloat(rawPrice)
+  // For MARKET orders price may be 0 / undefined — default to 0
+  const price = (rawPrice !== undefined && rawPrice !== null) ? parseFloat(rawPrice) : 0
   const qty = parseFloat(rawQty)
 
   // Fetch user
