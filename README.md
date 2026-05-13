@@ -38,11 +38,11 @@ npm install
 ```bash
 cp .env.example .env
 ```
-*Note: Update the `DATABASE_URL` in the `.env` file with your actual PostgreSQL credentials.*
+*Note: Update the `DATABASE_URL` in the `.env` file to match your local PostgreSQL setup (e.g., `postgresql://<your-mac-username>@localhost:5432/tempomatch`).*
 
-4. Run database migrations:
+4. Push the database schema:
 ```bash
-npx prisma migrate dev
+npx prisma db push
 ```
 5. Start the backend server:
 ```bash
