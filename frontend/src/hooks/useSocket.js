@@ -1,17 +1,46 @@
 // Socket.io-client connection manager
-// Will be wired up when backend is ready
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { io } from 'socket.io-client'
 
-export default function useSocket(url = 'http://localhost:3001') {
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'
+
+let sharedSocket = null // singleton across re-renders
+
+export default function useSocket() {
   const socketRef = useRef(null)
+  const [connected, setConnected] = useState(false)
 
   useEffect(() => {
-    // Socket connection will be established when backend is built
-    // import { io } from 'socket.io-client'
-    // socketRef.current = io(url)
-    // return () => socketRef.current?.disconnect()
-  }, [url])
+    if (!sharedSocket) {
+      sharedSocket = io(BACKEND_URL, {
+        transports: ['websocket'],
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+      })
+    }
+    socketRef.current = sharedSocket
 
-  return socketRef.current
+    const onConnect = () => {
+      console.log('[WS] Connected:', sharedSocket.id)
+      setConnected(true)
+    }
+    const onDisconnect = () => {
+      console.log('[WS] Disconnected')
+      setConnected(false)
+    }
+
+    sharedSocket.on('connect', onConnect)
+    sharedSocket.on('disconnect', onDisconnect)
+
+    // Sync initial connected state
+    setConnected(sharedSocket.connected)
+
+    return () => {
+      sharedSocket.off('connect', onConnect)
+      sharedSocket.off('disconnect', onDisconnect)
+    }
+  }, [])
+
+  return { socket: socketRef.current, connected }
 }

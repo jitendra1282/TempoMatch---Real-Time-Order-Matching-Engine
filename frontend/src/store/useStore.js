@@ -1,11 +1,12 @@
 import { create } from 'zustand'
 
-// Generate mock candle data
+// ── Mock data generators (used as initial/fallback state) ─────────────────────
+
 function generateMockCandles() {
   const candles = []
   let basePrice = 81000
   const now = Math.floor(Date.now() / 1000)
-  const interval = 3600 // 1 hour candles
+  const interval = 3600
 
   for (let i = 100; i >= 0; i--) {
     const time = now - i * interval
@@ -14,43 +15,29 @@ function generateMockCandles() {
     const high = Math.max(open, close) + Math.random() * 300
     const low = Math.min(open, close) - Math.random() * 300
     const volume = Math.random() * 200 + 20
-
     candles.push({ time, open, high, low, close, volume })
     basePrice = close
   }
   return candles
 }
 
-// Generate mock order book
 function generateMockOrderBook() {
   const basePrice = 81072.96
   const asks = []
   const bids = []
-
   for (let i = 0; i < 15; i++) {
     const askPrice = basePrice + (i + 1) * (Math.random() * 2 + 0.5)
     const bidPrice = basePrice - (i + 1) * (Math.random() * 2 + 0.5)
     const askAmt = Math.random() * 5 + 0.001
     const bidAmt = Math.random() * 5 + 0.001
-
-    asks.push({
-      price: askPrice,
-      amount: askAmt,
-      total: askAmt * askPrice,
-    })
-    bids.push({
-      price: bidPrice,
-      amount: bidAmt,
-      total: bidAmt * bidPrice,
-    })
+    asks.push({ price: askPrice, amount: askAmt, total: askAmt * askPrice })
+    bids.push({ price: bidPrice, amount: bidAmt, total: bidAmt * bidPrice })
   }
-
   asks.sort((a, b) => a.price - b.price)
   bids.sort((a, b) => b.price - a.price)
   return { asks, bids, lastPrice: basePrice }
 }
 
-// Generate mock recent trades
 function generateMockTrades() {
   const trades = []
   let price = 81072.96
@@ -69,9 +56,15 @@ function generateMockTrades() {
   return trades
 }
 
-const useStore = create((set) => ({
-  // Current user
-  currentUser: { id: 'user-alice', name: 'Alice' },
+// ── Store ────────────────────────────────────────────────────────────────────
+
+const useStore = create((set, get) => ({
+  // Socket connection status
+  socketConnected: false,
+  setSocketConnected: (v) => set({ socketConnected: v }),
+
+  // Current user (set after login/user-select)
+  currentUser: null,
   setCurrentUser: (user) => set({ currentUser: user }),
 
   // Balances
@@ -88,7 +81,7 @@ const useStore = create((set) => ({
   },
   setMarketStats: (stats) => set({ marketStats: stats }),
 
-  // Order book
+  // Order book (replaced by live WS data when connected)
   orderBook: generateMockOrderBook(),
   setOrderBook: (book) => set({ orderBook: book }),
 
@@ -96,13 +89,31 @@ const useStore = create((set) => ({
   candleData: { candles: generateMockCandles() },
   setCandleData: (data) => set({ candleData: data }),
 
-  // Recent trades
+  // Recent trades (replaced by live WS data when connected)
   recentTrades: generateMockTrades(),
   setRecentTrades: (trades) => set({ recentTrades: trades }),
 
-  // Open orders
+  // Open orders for current user
   openOrders: [],
   setOpenOrders: (orders) => set({ openOrders: orders }),
+
+  // Append or update a single order in openOrders list
+  upsertOpenOrder: (order) => {
+    const orders = get().openOrders
+    const idx = orders.findIndex(o => o.id === order.id)
+    if (idx === -1) {
+      set({ openOrders: [order, ...orders] })
+    } else {
+      const updated = [...orders]
+      updated[idx] = order
+      set({ openOrders: updated })
+    }
+  },
+
+  // Remove an order from openOrders list
+  removeOpenOrder: (orderId) => {
+    set({ openOrders: get().openOrders.filter(o => o.id !== orderId) })
+  },
 }))
 
 export default useStore

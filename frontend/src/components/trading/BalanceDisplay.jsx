@@ -1,7 +1,28 @@
+import { useEffect } from 'react'
 import useStore from '../../store/useStore'
+import { getBalance } from '../../services/api'
 
 export default function BalanceDisplay() {
-  const { balances } = useStore()
+  const currentUser = useStore((s) => s.currentUser)
+  const balances = useStore((s) => s.balances)
+  const setBalances = useStore((s) => s.setBalances)
+
+  // Fetch real balance from backend whenever user changes
+  useEffect(() => {
+    if (!currentUser?.id || currentUser.id === 'offline') return
+
+    getBalance(currentUser.id)
+      .then((res) => {
+        const { fiatBalance, assetBalance } = res.data.user
+        setBalances({
+          fiat: parseFloat(fiatBalance),
+          asset: parseFloat(assetBalance),
+        })
+      })
+      .catch(() => {
+        // Backend offline — keep existing balances
+      })
+  }, [currentUser?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="px-3 py-2 border-t border-border mt-auto shrink-0">

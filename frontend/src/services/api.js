@@ -1,15 +1,20 @@
 import axios from 'axios'
 
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'
+
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: `${BASE_URL}/api/v1`,
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Order APIs
+// ── Order APIs ────────────────────────────────────────────────────────────────
 export const placeOrder = (data) => api.post('/orders', data)
-export const cancelOrder = (id) => api.delete(`/orders/${id}`)
+export const cancelOrder = (id, userId) => api.delete(`/orders/${id}?userId=${userId}`)
+export const getOpenOrders = (userId) => api.get(`/orders?userId=${userId}`)
 
-// User APIs
+// ── User APIs ─────────────────────────────────────────────────────────────────
 export const getBalance = (userId) => api.get(`/users/${userId}/balance`)
+export const createUser = (username) => api.post('/users', { username })
+export const listUsers = () => api.get('/users')
 
 export default api

@@ -11,7 +11,7 @@ model User {
   id           String   @id @default(uuid())
   username     String   @unique
   fiatBalance  Decimal  @default(10000.00)
-  assetBalance Decimal  @default(0.00)
+  assetBalance Decimal  @default(1.00)
   orders       Order[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
