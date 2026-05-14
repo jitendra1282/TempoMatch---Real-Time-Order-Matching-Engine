@@ -24,44 +24,51 @@ TempoMatch/
 ### Prerequisites
 - Node.js (v18+ recommended)
 - PostgreSQL (Ensure it is running)
+- Create a database in PostgreSQL named `tempomatch` (if it does not exist)
 
-### Backend Setup
-1. Navigate to the backend directory:
+### 1. Backend Setup
+Open your terminal and navigate to the backend directory:
 ```bash
 cd backend
-```
-2. Install dependencies:
-```bash
 npm install
 ```
-3. Configure environment variables. Create a `.env` file in the `backend` directory (you can copy from `.env.example`):
+
+Configure environment variables:
 ```bash
 cp .env.example .env
 ```
-*Note: Update the `DATABASE_URL` in the `.env` file to match your local PostgreSQL setup (e.g., `postgresql://<your-mac-username>@localhost:5432/tempomatch`).*
+**🚨 IMPORTANT:** Open the newly created `backend/.env` file and update the `DATABASE_URL` to match your local PostgreSQL username. 
+For example, if your Mac username is `jitendra`:
+`DATABASE_URL="postgresql://jitendra@localhost:5432/tempomatch"`
 
-4. Push the database schema:
+Initialize the database schema and generate Prisma Client:
 ```bash
 npx prisma db push
+npx prisma generate
 ```
-5. Start the backend server:
+
+Start the backend server:
 ```bash
 npm run dev
 ```
 
-### Frontend Setup
-1. Open a new terminal and navigate to the frontend directory:
+### 2. Frontend Setup
+Open a **new, separate terminal window** and navigate to the frontend directory:
 ```bash
 cd frontend
-```
-2. Install dependencies:
-```bash
 npm install
-```
-3. Start the frontend development server:
-```bash
 npm run dev
 ```
+
+Once both servers are running, open your browser and navigate to the local URL provided by Vite (usually `http://localhost:5173`).
+
+### 🛠️ Troubleshooting
+
+- **`Error: listen EADDRINUSE: address already in use :::3001`**
+  This means the backend is already running in the background. Find the process using `lsof -i :3001` and kill it using `kill -9 <PID>`, or close the terminal where it's currently running.
+
+- **`User 'user' was denied access on the database 'tempomatch.public'`**
+  You forgot to update the `DATABASE_URL` in your `backend/.env` file. Change the placeholder `user:password` to your actual PostgreSQL username.
 
 ## Features
 - 📊 Real-time candlestick chart (lightweight-charts)

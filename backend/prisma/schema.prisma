@@ -12,20 +12,20 @@ model User {
   username     String   @unique
   fiatBalance  Decimal  @default(10000.00)
   assetBalance Decimal  @default(1.00)
-  orders       Order[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  orders       Order[]
 }
 
 model Order {
   id           String   @id @default(uuid())
   userId       String
-  side         String   // "BUY" | "SELL"
-  type         String   // "LIMIT" | "MARKET"
+  side         String
+  type         String
   price        Decimal
   initialQty   Decimal
   remainingQty Decimal
-  status       String   // "OPEN" | "PARTIAL" | "FILLED" | "CANCELED"
+  status       String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   user         User     @relation(fields: [userId], references: [id])
