@@ -2,16 +2,17 @@
 // These endpoints should be disabled in production
 
 import { Router } from 'express'
-import { stopMarketMaker, startMarketMaker } from '../services/marketMaker.js'
+import { stopMarketMaker, startMarketMaker, cancelAllBotOrdersForAdmin } from '../services/marketMaker.js'
 
 const router = Router()
 
 /**
  * POST /api/v1/admin/bot/stop
- * Stop the market maker bot (useful for testing).
+ * Stop the market maker bot and cancel all its resting orders.
  */
 router.post('/bot/stop', async (req, res) => {
   stopMarketMaker()
+  await cancelAllBotOrdersForAdmin()
   res.json({ status: 'stopped' })
 })
 
