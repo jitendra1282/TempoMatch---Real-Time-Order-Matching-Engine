@@ -1,0 +1,430 @@
+/* TempoMatch Auth Pages — Premium dark trading theme */
+
+/* ── Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Auth Container ── */
+.auth-root {
+  min-height: 100vh;
+  width: 100%;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #080a0e;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(240,185,11,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(19,210,132,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 20% 90%, rgba(255,77,100,0.04) 0%, transparent 50%);
+  font-family: 'Inter', -apple-system, sans-serif;
+  padding: 24px 16px;
+}
+
+/* ── Grid background lines ── */
+.auth-root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
+/* ── Card ── */
+.auth-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: rgba(18, 22, 30, 0.9);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 20px;
+  padding: 36px 32px 32px;
+  backdrop-filter: blur(24px);
+  box-shadow:
+    0 0 0 1px rgba(240,185,11,0.05),
+    0 32px 80px rgba(0,0,0,0.6),
+    0 0 60px rgba(240,185,11,0.04);
+  animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Logo header ── */
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.auth-logo-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f0b90b, #d4a30a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 18px;
+  color: #080a0e;
+  box-shadow: 0 4px 16px rgba(240,185,11,0.35);
+  flex-shrink: 0;
+}
+
+.auth-logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.auth-logo-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f0f2f5;
+  letter-spacing: -0.3px;
+}
+
+.auth-logo-tagline {
+  font-size: 11px;
+  color: #646a73;
+  font-weight: 400;
+}
+
+/* ── Title ── */
+.auth-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #f0f2f5;
+  margin-bottom: 4px;
+  letter-spacing: -0.3px;
+}
+
+.auth-subtitle {
+  font-size: 13px;
+  color: #646a73;
+  margin-bottom: 24px;
+}
+
+/* ── Tab switcher ── */
+.auth-tabs {
+  display: flex;
+  gap: 2px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 20px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 8px 4px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #646a73;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.auth-tab:hover {
+  color: #9ea4ae;
+}
+
+.auth-tab.active {
+  background: rgba(240,185,11,0.12);
+  color: #f0b90b;
+  box-shadow: 0 0 0 1px rgba(240,185,11,0.2);
+}
+
+/* ── Input group ── */
+.auth-field {
+  margin-bottom: 14px;
+}
+
+.auth-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #9ea4ae;
+  margin-bottom: 6px;
+}
+
+.auth-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input-icon {
+  position: absolute;
+  left: 12px;
+  color: #646a73;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 11px 12px 11px 38px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  color: #f0f2f5;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.auth-input:focus {
+  border-color: rgba(240,185,11,0.5);
+  background: rgba(240,185,11,0.04);
+  box-shadow: 0 0 0 3px rgba(240,185,11,0.08);
+}
+
+.auth-input::placeholder {
+  color: #646a73;
+}
+
+.auth-input-suffix {
+  position: absolute;
+  right: 12px;
+  color: #646a73;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* ── Submit button ── */
+.auth-btn {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, #f0b90b, #d4a30a);
+  border: none;
+  border-radius: 10px;
+  color: #080a0e;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 6px;
+  box-shadow: 0 4px 20px rgba(240,185,11,0.25);
+  letter-spacing: 0.2px;
+}
+
+.auth-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 28px rgba(240,185,11,0.35);
+  transform: translateY(-1px);
+}
+
+.auth-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auth-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Divider ── */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: #646a73;
+  font-size: 12px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+}
+
+/* ── Google button ── */
+.auth-google-btn {
+  width: 100%;
+  padding: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: #f0f2f5;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.auth-google-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.15);
+}
+
+.auth-google-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Error / Success messages ── */
+.auth-message {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.auth-message.error {
+  background: rgba(255,77,100,0.1);
+  border: 1px solid rgba(255,77,100,0.25);
+  color: #ff6b80;
+}
+
+.auth-message.success {
+  background: rgba(19,210,132,0.1);
+  border: 1px solid rgba(19,210,132,0.25);
+  color: #13d284;
+}
+
+/* ── Footer link ── */
+.auth-footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: #646a73;
+}
+
+.auth-link {
+  color: #f0b90b;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: 500;
+  padding: 0;
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  color: #d4a30a;
+  text-decoration: underline;
+}
+
+/* ── Phone prefix ── */
+.auth-phone-wrap {
+  display: flex;
+  gap: 8px;
+}
+
+.auth-phone-prefix {
+  padding: 11px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  color: #9ea4ae;
+  font-size: 14px;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Spinner ── */
+.auth-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(8,10,14,0.4);
+  border-top-color: #080a0e;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Live ticker strip at top ── */
+.auth-ticker {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  background: rgba(18,22,30,0.95);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.auth-ticker-track {
+  display: flex;
+  gap: 40px;
+  animation: tickerScroll 30s linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes tickerScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.auth-ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #9ea4ae;
+}
+
+.auth-ticker-item .pair {
+  color: #f0f2f5;
+  font-weight: 600;
+}
+
+.auth-ticker-item .price {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.auth-ticker-item .up { color: #13d284; }
+.auth-ticker-item .down { color: #ff4d64; }
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 28px 20px 24px;
+    border-radius: 16px;
+  }
+  .auth-title { font-size: 20px; }
+}

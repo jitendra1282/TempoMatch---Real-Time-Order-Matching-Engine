@@ -4,6 +4,7 @@
 //   • Every REFRESH_INTERVAL ms, cancel all existing bot orders then re-seed
 //     the book with LEVELS bid + ask levels around the mid price.
 //   • This ensures there is always a counterparty within a tight spread.
+//   • Bot respects its own balance — will not place orders it can't afford.
 
 import { PrismaClient } from '@prisma/client'
 import { match } from '../engine/MatchingEngine.js'
@@ -52,21 +53,67 @@ async function cancelAllBotOrders() {
   // Mark all OPEN/PARTIAL bot orders as CANCELED in DB
   const orders = await prisma.order.findMany({
     where: { userId: botUserId, status: { in: ['OPEN', 'PARTIAL'] } },
-    select: { id: true, side: true },
+    select: { id: true, side: true, price: true, remainingQty: true },
   })
+
   for (const o of orders) {
     orderBook.removeOrder(o.id, o.side)
   }
+
   if (orders.length > 0) {
-    await prisma.order.updateMany({
-      where: { id: { in: orders.map((o) => o.id) } },
-      data: { status: 'CANCELED' },
+    // Refund reserved balances when canceling bot orders
+    await prisma.$transaction(async (tx) => {
+      await tx.order.updateMany({
+        where: { id: { in: orders.map((o) => o.id) } },
+        data: { status: 'CANCELED' },
+      })
+      for (const o of orders) {
+        if (o.side === 'BUY') {
+          await tx.user.update({
+            where: { id: botUserId },
+            data: { fiatBalance: { increment: parseFloat(o.price) * parseFloat(o.remainingQty) } },
+          })
+        } else {
+          await tx.user.update({
+            where: { id: botUserId },
+            data: { assetBalance: { increment: parseFloat(o.remainingQty) } },
+          })
+        }
+      }
     })
   }
 }
 
 async function placeLevel(side, price, qty) {
   const roundedPrice = Math.round(price * 100) / 100
+
+  // ── Balance check before placing bot order ────────────────────────────────
+  const botUser = await prisma.user.findUnique({
+    where: { id: botUserId },
+    select: { fiatBalance: true, assetBalance: true },
+  })
+  if (!botUser) return
+
+  const fiat  = parseFloat(botUser.fiatBalance)
+  const asset = parseFloat(botUser.assetBalance)
+
+  if (side === 'BUY' && fiat < roundedPrice * qty) {
+    console.warn(`[MarketMaker] Skipping BUY level — insufficient fiat (have ${fiat.toFixed(2)}, need ${(roundedPrice * qty).toFixed(2)})`)
+    return
+  }
+  if (side === 'SELL' && asset < qty) {
+    console.warn(`[MarketMaker] Skipping SELL level — insufficient asset (have ${asset.toFixed(6)}, need ${qty.toFixed(6)})`)
+    return
+  }
+
+  // Reserve funds before creating order in DB
+  await prisma.user.update({
+    where: { id: botUserId },
+    data: side === 'BUY'
+      ? { fiatBalance:  { decrement: roundedPrice * qty } }
+      : { assetBalance: { decrement: qty } },
+  })
+
   const order = await prisma.order.create({
     data: {
       userId: botUserId,
@@ -101,6 +148,32 @@ async function placeLevel(side, price, qty) {
             qty: t.qty,
           },
         })
+        // Credit maker (user whose order was resting)
+        const makerOrder = await tx.order.findUnique({
+          where: { id: t.makerOrderId },
+          select: { userId: true, side: true },
+        })
+        if (makerOrder) {
+          if (makerOrder.side === 'BUY') {
+            await tx.user.update({ where: { id: makerOrder.userId }, data: { assetBalance: { increment: t.qty } } })
+          } else {
+            await tx.user.update({ where: { id: makerOrder.userId }, data: { fiatBalance: { increment: t.price * t.qty } } })
+          }
+        }
+        // Credit taker (bot)
+        if (side === 'BUY') {
+          // Bot bought BTC — refund unused fiat reservation and credit BTC
+          const actualCost = t.price * t.qty
+          const reservedCost = roundedPrice * t.qty
+          const fiatRefund = reservedCost - actualCost
+          if (fiatRefund > 0) {
+            await tx.user.update({ where: { id: botUserId }, data: { fiatBalance: { increment: fiatRefund } } })
+          }
+          await tx.user.update({ where: { id: botUserId }, data: { assetBalance: { increment: t.qty } } })
+        } else {
+          await tx.user.update({ where: { id: botUserId }, data: { fiatBalance: { increment: t.price * t.qty } } })
+        }
+
         await tx.order.update({
           where: { id: t.makerOrderId },
           data: { remainingQty: 0, status: 'FILLED' },
@@ -126,7 +199,10 @@ async function seedBook() {
     tasks.push(placeLevel('SELL', askPrice, +qty.toFixed(5)))
     tasks.push(placeLevel('BUY',  bidPrice, +qty.toFixed(5)))
   }
-  await Promise.all(tasks)
+  // Execute sequentially to avoid balance race conditions on the bot account
+  for (const task of tasks) {
+    await task
+  }
   broadcastOrderBook()
 }
 

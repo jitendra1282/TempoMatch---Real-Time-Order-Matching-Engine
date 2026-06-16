@@ -6,6 +6,7 @@ import { Server } from 'socket.io'
 import cors from 'cors'
 import orderRoutes from './routes/orders.js'
 import userRoutes from './routes/users.js'
+import authRoutes from './routes/auth.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { init as initBroadcast, broadcastOrderBook } from './services/broadcastService.js'
 
@@ -27,6 +28,7 @@ app.use(express.json())
 // ── Routes ──────────────────────────────────────────────────────────────────
 app.use('/api/v1/orders', orderRoutes)
 app.use('/api/v1/users', userRoutes)
+app.use('/api/v1/auth', authRoutes)
 
 // ── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }))

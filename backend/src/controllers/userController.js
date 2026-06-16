@@ -25,14 +25,16 @@ export async function getBalance(req, res, next) {
  */
 export async function createUser(req, res, next) {
   try {
-    const { username } = req.body
+    const { username, id } = req.body
     if (!username) return res.status(400).json({ error: 'username is required' })
 
-    const user = await prisma.user.create({ data: { username } })
+    // Allow caller to supply a specific UUID (useful for concurrency tests)
+    const data = id ? { id, username } : { username }
+    const user = await prisma.user.create({ data })
     res.status(201).json({ user })
   } catch (err) {
     if (err.code === 'P2002') {
-      // Unique constraint — username taken
+      // Unique constraint — username already taken
       return res.status(409).json({ error: 'Username already exists' })
     }
     next(err)

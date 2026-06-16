@@ -22,16 +22,16 @@ export function broadcastOrderBook() {
 
 /**
  * Broadcast a trade execution event.
- * @param {{ makerOrderId, takerOrderId, price, qty, executedAt }} trade
+ * @param {{ makerOrderId, takerOrderId, price, qty, executedAt, makerSide }} trade
  */
 export function broadcastTrade(trade) {
   if (!_io) return
   _io.emit('trade_executed', {
-    price: trade.price,
-    qty: trade.qty,
+    price:        trade.price,
+    qty:          trade.qty,
     makerOrderId: trade.makerOrderId,
     takerOrderId: trade.takerOrderId,
-    executedAt: trade.executedAt,
-    makerSide: 'SELL', // maker is always the resting side
+    executedAt:   trade.executedAt,
+    makerSide:    trade.makerSide, // actual maker side — not hardcoded
   })
 }

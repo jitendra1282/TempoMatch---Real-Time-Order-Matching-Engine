@@ -3,6 +3,11 @@ import useStore from '../../store/useStore'
 export default function Navbar() {
   const { currentUser, setCurrentUser, socketConnected } = useStore()
 
+  function handleLogout() {
+    localStorage.removeItem('tm_token')
+    setCurrentUser(null)
+  }
+
   return (
     <nav className="flex items-center justify-between px-4 h-14 bg-bg-secondary/80 backdrop-blur-md border-b border-border shrink-0 sticky top-0 z-50 shadow-sm">
       {/* Logo */}
@@ -37,12 +42,13 @@ export default function Navbar() {
               {currentUser?.username?.[0]?.toUpperCase() || '?'}
             </span>
           </div>
-          {currentUser?.username}
+          <span className="max-w-[120px] truncate">{currentUser?.username}</span>
         </div>
         
         <button 
-          onClick={() => setCurrentUser(null)}
-          className="text-text-secondary text-xs hover:text-text-primary cursor-pointer"
+          onClick={handleLogout}
+          className="text-text-secondary text-xs hover:text-text-primary cursor-pointer transition-colors"
+          title="Sign out"
         >
           Logout
         </button>

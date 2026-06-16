@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import useStore from '../../store/useStore'
-import { placeOrder } from '../../services/api'
-import { getOpenOrders } from '../../services/api'
+import { placeOrder, getBalance } from '../../services/api'
 
 export default function OrderEntryForm() {
   const currentUser = useStore((s) => s.currentUser)
@@ -19,7 +18,7 @@ export default function OrderEntryForm() {
   const isBuy = side === 'BUY'
   const total = price && quantity ? (parseFloat(price) * parseFloat(quantity)).toFixed(2) : '0.00'
 
-  // Quick percentage buttons
+  // Quick percentage buttons — uses CURRENT backend-synced balances
   const handlePct = (pct) => {
     if (side === 'BUY' && price && parseFloat(price) > 0) {
       const maxQty = (balances.fiat * pct / 100) / parseFloat(price)
@@ -29,9 +28,40 @@ export default function OrderEntryForm() {
     }
   }
 
+  // Refresh balance from backend and update store
+  async function refreshBalance() {
+    if (!currentUser?.id || currentUser.id === 'offline') return
+    try {
+      const res = await getBalance(currentUser.id)
+      const { fiatBalance, assetBalance } = res.data.user
+      setBalances({
+        fiat: parseFloat(fiatBalance),
+        asset: parseFloat(assetBalance),
+      })
+    } catch {
+      // Keep existing — backend might be momentarily busy
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!currentUser) return
+
+    // Client-side pre-check (not a substitute for server validation)
+    const qty = parseFloat(quantity)
+    const priceVal = parseFloat(price) || 0
+
+    if (side === 'BUY' && orderType === 'LIMIT') {
+      const cost = priceVal * qty
+      if (cost > balances.fiat) {
+        setStatus({ type: 'error', msg: `Insufficient USDT — you have ${balances.fiat.toFixed(2)} USDT, need ${cost.toFixed(2)} USDT` })
+        return
+      }
+    }
+    if (side === 'SELL' && qty > balances.asset) {
+      setStatus({ type: 'error', msg: `Insufficient BTC — you have ${balances.asset.toFixed(6)} BTC, need ${qty.toFixed(6)} BTC` })
+      return
+    }
 
     setLoading(true)
     setStatus(null)
@@ -41,8 +71,8 @@ export default function OrderEntryForm() {
         userId: currentUser.id,
         side,
         type: orderType,
-        qty: parseFloat(quantity),
-        ...(orderType === 'LIMIT' ? { price: parseFloat(price) } : { price: 0 }),
+        qty,
+        ...(orderType === 'LIMIT' ? { price: priceVal } : { price: 0 }),
       }
 
       const res = await placeOrder(payload)
@@ -53,27 +83,26 @@ export default function OrderEntryForm() {
         upsertOpenOrder(order)
       }
 
-      // Optimistically update balances from trade fills
-      if (trades.length > 0) {
-        const fillCost = trades.reduce((sum, t) => sum + Number(t.price) * Number(t.qty), 0)
-        const fillQty = trades.reduce((sum, t) => sum + Number(t.qty), 0)
-        if (side === 'BUY') {
-          setBalances({ fiat: balances.fiat - fillCost, asset: balances.asset + fillQty })
-        } else {
-          setBalances({ fiat: balances.fiat + fillCost, asset: balances.asset - fillQty })
-        }
-      }
-
       const tradeMsg = trades.length > 0 ? ` ${trades.length} trade(s) filled!` : ''
       setStatus({ type: 'success', msg: `Order ${order.status.toLowerCase()}.${tradeMsg}` })
       setQuantity('')
       if (orderType !== 'LIMIT') setPrice('')
+
+      // ALWAYS refresh balance from server after order placement.
+      // This ensures the displayed balance reflects:
+      //   • Reserved funds for resting LIMIT orders
+      //   • Actual fills from MARKET orders
+      //   • Any partial fills
+      await refreshBalance()
+
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.errors?.[0]?.msg || 'Order failed'
       setStatus({ type: 'error', msg })
+      // Refresh balance even on error (server may have rejected for balance reasons)
+      await refreshBalance()
     } finally {
       setLoading(false)
-      setTimeout(() => setStatus(null), 4000)
+      setTimeout(() => setStatus(null), 5000)
     }
   }
 

@@ -94,7 +94,7 @@ export default function OpenOrders() {
 
       {/* Column headers */}
       <div className="grid px-4 py-2 text-text-muted text-[10px] uppercase tracking-wider shrink-0 bg-bg-secondary/20"
-        style={{ gridTemplateColumns: activeTab === 'TRADES' ? '2fr 1fr 1fr 1fr' : '1.5fr 1fr 1fr 1fr 1fr 1fr 1fr' }}
+      style={{ gridTemplateColumns: activeTab === 'TRADES' ? '2fr 1fr 1fr 1fr 1.5fr' : '1.5fr 1fr 1fr 1fr 1fr 1fr 1fr' }}
       >
         <span>Time</span>
         {activeTab !== 'TRADES' && <span>Pair</span>}
@@ -103,6 +103,7 @@ export default function OpenOrders() {
         <span className="text-right">Amount</span>
         {activeTab !== 'TRADES' && <span className="text-right">Filled</span>}
         {activeTab === 'TRADES' && <span className="text-right">Role</span>}
+        {activeTab === 'TRADES' && <span className="text-right">Counterparty</span>}
         {activeTab !== 'TRADES' && <span className="text-right">Action / Status</span>}
       </div>
 
@@ -119,7 +120,7 @@ export default function OpenOrders() {
             <div
               key={item.id}
               className="grid px-4 py-2.5 text-xs tabular-nums hover:bg-bg-hover transition-colors border-b border-border/50 last:border-0"
-              style={{ gridTemplateColumns: activeTab === 'TRADES' ? '2fr 1fr 1fr 1fr' : '1.5fr 1fr 1fr 1fr 1fr 1fr 1fr' }}
+              style={{ gridTemplateColumns: activeTab === 'TRADES' ? '2fr 1fr 1fr 1fr 1.5fr' : '1.5fr 1fr 1fr 1fr 1fr 1fr 1fr' }}
             >
               <span className="text-text-secondary">{formatDate(item.createdAt || item.executedAt)}</span>
               {activeTab !== 'TRADES' && <span className="text-text-primary">BTC/USDT</span>}
@@ -129,11 +130,24 @@ export default function OpenOrders() {
               
               {activeTab !== 'TRADES' && <span className="text-right text-text-secondary">{filledPct(item)}%</span>}
               
-              {activeTab === 'TRADES' && (
-                <span className="text-right text-text-muted">
-                  {item.makerOrderId && currentUser?.id && item.makerOrderId.includes(currentUser.id) ? 'Maker' : 'Taker'}
-                </span>
-              )}
+              {activeTab === 'TRADES' && (() => {
+                // "Order Poster" = placed order first, it sat in the book waiting (formerly "Maker")
+                // "Order Taker"  = placed an order that matched an existing one immediately (formerly "Taker")
+                const isOrderPoster = item.makerOrder?.user?.id === currentUser?.id
+                const role = isOrderPoster ? 'Order Poster' : 'Order Taker'
+                const roleTitle = isOrderPoster
+                  ? 'You posted this order to the book first — it waited until someone matched it'
+                  : 'You placed this order and it immediately matched an existing order in the book'
+                const counterparty = isOrderPoster
+                  ? (item.takerOrder?.user?.username ?? '—')
+                  : (item.makerOrder?.user?.username ?? '—')
+                return (
+                  <>
+                    <span className="text-right text-text-muted cursor-help" title={roleTitle}>{role}</span>
+                    <span className="text-right font-medium" style={{ color: 'var(--color-accent, #7c6aff)' }}>{counterparty}</span>
+                  </>
+                )
+              })()}
 
               {activeTab !== 'TRADES' && (
                 <span className="text-right">

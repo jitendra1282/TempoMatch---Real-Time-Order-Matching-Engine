@@ -13,8 +13,12 @@ export async function createOrder(req, res, next) {
 
     // Broadcast real-time updates
     broadcastOrderBook()
+
     for (const trade of trades) {
-      broadcastTrade(trade)
+      // Determine maker side by looking at the order that was resting in the book.
+      // The taker side is the incoming order's side; the maker side is the opposite.
+      const makerSide = req.body.side === 'BUY' ? 'SELL' : 'BUY'
+      broadcastTrade({ ...trade, makerSide })
     }
 
     res.status(201).json({ order, trades })
