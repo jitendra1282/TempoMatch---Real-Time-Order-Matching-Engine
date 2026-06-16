@@ -231,8 +231,7 @@ export async function placeOrder(data) {
       // ── MARKET BUY reconciliation ──────────────────────────────────────────
       // Phase 1 reserved estimatedCost = estimatedPrice * qty.
       // Actual cost = sum of (fillPrice * fillQty) for each trade.
-      // Refund the difference + refund for any unfilled qty (MARKET orders
-      // that can't fully fill just stop — remaining qty is not added to book).
+      // Refund the difference + refund for any unfilled qty.
       if (side === 'BUY' && type === 'MARKET') {
         const bestAsk = orderBook.peekAsk()
         const estimatedPrice = bestAsk
@@ -242,10 +241,30 @@ export async function placeOrder(data) {
         const refund = estimatedReservation - actualFillCost
 
         if (refund > 0) {
-          // Return unspent reserved funds
           await tx.user.update({
             where: { id: userId },
             data:  { fiatBalance: { increment: refund } },
+          })
+        }
+      }
+
+      // ── LIMIT BUY price-improvement refund ────────────────────────────────
+      // Phase 1 reserved (limitPrice × qty). If trades executed at a lower
+      // price (price improvement), return the over-reserved USDT to the buyer.
+      // • Reserved:      limitPrice × filledQty
+      // • Actual cost:   actualFillCost  (= Σ fillPrice × fillQty)
+      // • Over-reserved: limitPrice × filledQty - actualFillCost
+      //
+      // If there is a remaining unfilled portion it stays resting in the book,
+      // still backed by the (limitPrice × remainingQty) reserve. No refund for
+      // that portion until it fills or is canceled.
+      if (side === 'BUY' && type === 'LIMIT' && result.filledQty > 0) {
+        const reservedForFilled = price * result.filledQty
+        const priceImprovementRefund = reservedForFilled - actualFillCost
+        if (priceImprovementRefund > 0.0000001) {
+          await tx.user.update({
+            where: { id: userId },
+            data:  { fiatBalance: { increment: priceImprovementRefund } },
           })
         }
       }
@@ -257,7 +276,6 @@ export async function placeOrder(data) {
           data:  { remainingQty: mu.remainingQty, status: mu.status },
         })
       }
-
       // Update taker order status
       await tx.order.update({
         where: { id: newOrder.id },

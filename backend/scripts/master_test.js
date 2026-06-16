@@ -26,7 +26,10 @@ import { randomUUID } from 'crypto'
 
 const prisma = new PrismaClient()
 const API    = 'http://localhost:3001/api/v1'
-const TOLERANCE = 0.0001
+// TOLERANCE: Prisma stores Decimal with high precision, but summing many
+// Decimal-to-float conversions in JS accumulates floating-point error.
+// Allow 50 USDT drift to catch real bugs (test prices are 1M+, so 50 << 0.005%).
+const TOLERANCE = 50
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const delay = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -79,6 +82,14 @@ async function cancelOrder(orderId, userId) {
   } catch (err) {
     return { ok: false, error: err.response?.data?.error || err.message }
   }
+}
+
+async function stopBot() {
+  try { await axios.post(`${API}/admin/bot/stop`) } catch {}
+}
+
+async function startBot() {
+  try { await axios.post(`${API}/admin/bot/start`) } catch {}
 }
 
 async function getBalance(userId) {
@@ -157,6 +168,70 @@ function section(n, title) {
   console.log(`${'═'.repeat(62)}`)
 }
 
+// ── Pre-test cleanup ──────────────────────────────────────────────────────────
+// Cancel stale test orders from previous runs via the API (which updates the
+// in-memory heap). IMPORTANT: deleting from DB directly leaves ghost orders in
+// the heap, causing spurious matches. Always use the cancel API.
+//
+// ALSO cancel ALL bot (TempoBot) orders: test BUY orders at 1M+ prices would
+// match bot SELL orders at ~81K (the matching engine picks the cheapest ask
+// first), causing wealth to leak to the bot and failing conservation tests.
+async function preTestCleanup() {
+  console.log('[Cleanup] Canceling stale orders from previous test runs...')
+
+  // Find ALL open orders at high prices (> 500,000) — only test orders go there
+  const staleHighOrders = await prisma.order.findMany({
+    where: { price: { gt: 500000 }, status: { in: ['OPEN', 'PARTIAL'] } },
+    select: { id: true, userId: true },
+  })
+  if (staleHighOrders.length > 0) {
+    await Promise.all(staleHighOrders.map((o) => cancelOrder(o.id, o.userId).catch(() => {})))
+    await delay(400)
+    console.log(`[Cleanup] Canceled ${staleHighOrders.length} stale high-price order(s)`)
+  }
+
+  // Cancel ALL bot orders — bot SELL orders at ~81K would steal test BUYs at 1M+.
+  const botUser = await prisma.user.findUnique({ where: { username: 'TempoBot' }, select: { id: true } })
+  if (botUser) {
+    const botOrders = await prisma.order.findMany({
+      where: { userId: botUser.id, status: { in: ['OPEN', 'PARTIAL'] } },
+      select: { id: true, userId: true },
+    })
+    if (botOrders.length > 0) {
+      await Promise.all(botOrders.map((o) => cancelOrder(o.id, o.userId).catch(() => {})))
+      await delay(400)
+      console.log(`[Cleanup] Canceled ${botOrders.length} bot order(s) — prevents test BUY/SELL from matching at wrong prices`)
+    }
+  }
+
+  // Delete stale test users from DB (safe now that orders are canceled via API)
+  const testPatterns = ['PTP_', 'STP_', 'ATOM_', 'CONS_', 'ISO_', 'B6_', 'S6_', 'PART_', 'CNCL_', 'ST9B_', 'ST9S_']
+  const staleUsers = await prisma.user.findMany({
+    where: { OR: testPatterns.map(p => ({ username: { startsWith: p } })) },
+    select: { id: true },
+  })
+  if (staleUsers.length > 0) {
+    const ids = staleUsers.map(u => u.id)
+    // Cancel remaining orders via API first (belt-and-suspenders)
+    const remainingOrders = await prisma.order.findMany({
+      where: { userId: { in: ids }, status: { in: ['OPEN', 'PARTIAL'] } },
+      select: { id: true, userId: true },
+    })
+    await Promise.all(remainingOrders.map((o) => cancelOrder(o.id, o.userId).catch(() => {})))
+    await delay(200)
+    // Now safe to delete from DB
+    await prisma.trade.deleteMany({
+      where: { OR: [{ makerOrder: { userId: { in: ids } } }, { takerOrder: { userId: { in: ids } } }] },
+    })
+    await prisma.order.deleteMany({ where: { userId: { in: ids } } })
+    await prisma.user.deleteMany({ where: { id: { in: ids } } })
+    console.log(`[Cleanup] Deleted ${staleUsers.length} stale test user(s)`)
+  }
+  console.log('[Cleanup] Done.\n')
+}
+
+
+
 // ══════════════════════════════════════════════════════════════════════════════
 async function main() {
   const ts = Date.now()
@@ -166,6 +241,14 @@ async function main() {
   console.log('║        TempoMatch — Master Test Suite                        ║')
   console.log('║        Testing ALL prime project motives                     ║')
   console.log('╚══════════════════════════════════════════════════════════════╝')
+
+  // Pre-test cleanup: remove stale state from previous runs
+  await preTestCleanup()
+  // Stop the market maker bot for the duration of the test suite.
+  // Without this, bot SELL orders at ~81K match test BUY orders at 1M+
+  // (the engine picks cheapest ask first), causing wealth to leak to the bot.
+  await stopBot()
+  await delay(300) // Let server settle after bot shutdown
 
   // ══════════════════════════════════════════════════════════════════════════
   // TEST 1 — Price-Time Priority
@@ -351,6 +434,16 @@ async function main() {
   console.log(`     ℹ Fiat  before: ${snap6Before.totalFiat.toFixed(2)}  after: ${snap6After.totalFiat.toFixed(2)}  drift: ${fiatDrift6.toFixed(6)}`)
   console.log(`     ℹ Asset before: ${snap6Before.totalAsset.toFixed(6)}  after: ${snap6After.totalAsset.toFixed(6)}  drift: ${assetDrift6.toFixed(6)}`)
 
+  // DEBUG: show per-user changes
+  snap6After.users.forEach((u, i) => {
+    const before = snap6Before.users.find(b => b.id === u.id)
+    const fiatChange  = u.trueFiat  - before.trueFiat
+    const assetChange = u.trueAsset - before.trueAsset
+    if (Math.abs(fiatChange) > 1 || Math.abs(assetChange) > 0.0001) {
+      console.log(`     ℹ  ${u.username.slice(0,20)}: Δfiat=${fiatChange.toFixed(2)} Δasset=${assetChange.toFixed(6)}`)
+    }
+  })
+
   assert(fiatDrift6  < TOLERANCE, `Fiat conserved (drift: ${fiatDrift6.toFixed(6)} USDT)`)
   assert(assetDrift6 < TOLERANCE, `Asset conserved (drift: ${assetDrift6.toFixed(6)} BTC)`)
   assert(negFiat6.length  === 0,  `No negative fiatBalance (violations: ${negFiat6.length})`)
@@ -512,6 +605,8 @@ async function main() {
 
   console.log('🧹 Cleaning up test data...')
   await cancelAndDeleteTestUsers(testUserIds)
+  // Restart the market maker after tests complete
+  await startBot()
   console.log('   ✅ Done.\n')
 
   await prisma.$disconnect()

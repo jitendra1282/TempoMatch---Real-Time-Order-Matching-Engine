@@ -29,8 +29,14 @@ let refreshTimer = null
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function midPrice() {
-  // Use last traded price if available, else fallback to BASE_PRICE
-  return orderBook.lastPrice || BASE_PRICE
+  // Use last traded price if available, else fallback to BASE_PRICE.
+  // Safety guard: if lastPrice is unrealistically high (> 10× BASE_PRICE,
+  // e.g., set by test orders or manipulation), reset to BASE_PRICE.
+  const last = orderBook.lastPrice
+  if (!last || last > BASE_PRICE * 10 || last < BASE_PRICE * 0.1) {
+    return BASE_PRICE
+  }
+  return last
 }
 
 async function ensureBotUser() {
