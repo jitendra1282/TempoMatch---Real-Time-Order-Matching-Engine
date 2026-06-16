@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import '../auth.css'
-import { loginUser, registerUser } from '../services/api'
+import '../../auth.css'
+import { loginUser, registerUser } from '../../services/api'
 
 // ── Ticker data ───────────────────────────────────────────────────────────────
 const TICKER_ITEMS = [
